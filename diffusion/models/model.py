@@ -67,7 +67,6 @@ class Decoder(torch.nn.Module):
             out = self.convs[i](out)
             if i + 1 < len(encoder_outputs):
                 out += encoder_outputs[i + 1]
-            print(out.shape)
         return out
 
 class UNet(torch.nn.Module):
