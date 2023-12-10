@@ -3,3 +3,5 @@
 *.swp
 *.tar.gz
 *.png
+diffusion/dataset/**/*
+!diffusion/dataset/dataset.py

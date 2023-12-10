@@ -49,10 +49,18 @@ def test(model, dataset):
             img.save(f'out_{i}.png')
         break
 
+def export_model(model, dataset):
+    model.eval()
+    model.to('cpu')
+    loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True)
+    data, label = next(iter(loader))
+    torch.onnx.export(model, data, type(dataset).__name__ + '_model.onnx', opset_version=17)
+
 if __name__ == '__main__':
     model = UNet(start_channels=24, factor=8)
     data = Flowers102(train=True)
 #    train(model, data, epochs=10)
     test(model, data)
+    export_model(model, data)
 
 
