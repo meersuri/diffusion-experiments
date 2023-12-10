@@ -1,1 +1,1 @@
-from .dataset import CIFAR10
+from .dataset import CIFAR10, Flowers102
