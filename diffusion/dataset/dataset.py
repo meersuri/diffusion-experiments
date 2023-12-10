@@ -19,4 +19,18 @@ class CIFAR10(torchvision.datasets.CIFAR10):
                          download=True,
                          target_transform=target_transform)
 
+def transform_Flowers102():
+    return torchvision.transforms.Compose([
+        torchvision.transforms.Resize((96, 128)),
+        torchvision.transforms.ToTensor(),
+        ])
+
+class Flowers102(torchvision.datasets.Flowers102):
+    def __init__(self, train=True, transform=transform_Flowers102(), target_transform=None):
+        super().__init__(root=ROOT_DIR,
+                         split='train' if train else 'val',
+                         transform=transform,
+                         download=True,
+                         target_transform=target_transform)
+
 

@@ -1,41 +1,43 @@
 import tqdm
 import torch
-from diffusion.dataset import CIFAR10
+from diffusion.dataset import CIFAR10, Flowers102
 from diffusion.models import UNet
 import PIL
 from PIL import Image
 import numpy as np
 
-def train(model):
-    data = CIFAR10()
-    loader = torch.utils.data.DataLoader(data, batch_size=32, shuffle=True)
+def train(model, dataset, epochs=1):
+    wts_path = type(dataset).__name__ + '_weights.pth'
+    loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
     model.to('cuda')
     model.train(True)
     optim = torch.optim.Adagrad(model.parameters())
     criterion = torch.nn.MSELoss()
     best_loss = np.inf
-    for step, (data, label) in enumerate(tqdm.tqdm(loader)):
-        data = data.to('cuda')
-        optim.zero_grad()
-        out = model(data)
-        loss = criterion(out, data)
-        loss.backward()
-        optim.step()
-        if loss.item() < best_loss:
-            best_loss = loss.item()
-            torch.save(model.state_dict(), 'cifar_weights.pth')
-        if step % 100 == 0:
-            print(f"\033sLoss: {loss.item()}\033u")
+    for epoch in range(epochs):
+        for step, (data, label) in enumerate(tqdm.tqdm(loader)):
+            data = data.to('cuda')
+            optim.zero_grad()
+            out = model(data)
+            loss = criterion(out, data)
+            loss.backward()
+            optim.step()
+            if loss.item() < best_loss:
+                best_loss = loss.item()
+                torch.save(model.state_dict(), wts_path)
+            if step % 100 == 0:
+                print(f"\033sLoss: {loss.item()}\033u")
 
 def load(model, weights_path):
     model.load_state_dict(torch.load(weights_path))
     return model
 
-def test(model):
-    load(model, 'cifar_weights.pth')
+def test(model, dataset):
+    wts_path = type(dataset).__name__ + '_weights.pth'
+    load(model, wts_path)
     model.eval()
     model.to('cpu')
-    test_loader = torch.utils.data.DataLoader(CIFAR10(train=False), batch_size=8, shuffle=True)
+    test_loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
     for data, label in test_loader:
         out = model(data)
         for i in range(out.shape[0]):
@@ -50,7 +52,9 @@ def test(model):
         break
 
 if __name__ == '__main__':
-    model = UNet(start_channels=8, factor=4)
-    test(model)
+    model = UNet(start_channels=24, factor=8)
+    data = Flowers102(train=True)
+#    train(model, data, epochs=10)
+    test(model, data)
 
 
