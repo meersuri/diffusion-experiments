@@ -43,9 +43,7 @@ def test(model, dataset):
         for i in range(out.shape[0]):
             img = out[i, ...]
             img = np.moveaxis(img.detach().numpy(), 0, -1)
-            img += img.min()
-            img /= img.max()
-            img *= 255
+            img = 255*np.clip(img, 0.0, 1.0)
             img = img.astype(np.uint8)
             img = PIL.Image.fromarray(img)
             img.save(f'out_{i}.png')
