@@ -18,7 +18,7 @@ def train(model, dataset, epochs=1):
         for step, (data, label) in enumerate(tqdm.tqdm(loader)):
             data = data.to('cuda')
             optim.zero_grad()
-            out = model(data)
+            out = model(data, 0)
             loss = criterion(out, data)
             loss.backward()
             optim.step()
@@ -32,14 +32,14 @@ def load(model, weights_path):
     model.load_state_dict(torch.load(weights_path))
     return model
 
-def test(model, dataset):
+def test(model, dataset, time=0):
     wts_path = type(dataset).__name__ + '_weights.pth'
     load(model, wts_path)
     model.eval()
     model.to('cpu')
     test_loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
     for data, label in test_loader:
-        out = model(data)
+        out = model(data, time)
         for i in range(out.shape[0]):
             img = out[i, ...]
             img = np.moveaxis(img.detach().numpy(), 0, -1)
@@ -49,12 +49,12 @@ def test(model, dataset):
             img.save(f'out_{i}.png')
         break
 
-def export_model(model, dataset):
+def export_model(model, dataset, time=0):
     model.eval()
     model.to('cpu')
     loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True)
     data, label = next(iter(loader))
-    torch.onnx.export(model, data, type(dataset).__name__ + '_model.onnx', opset_version=17)
+    torch.onnx.export(model, (data, time), type(dataset).__name__ + '_model.onnx', opset_version=17)
 
 if __name__ == '__main__':
     model = UNet(start_channels=24, factor=8)
