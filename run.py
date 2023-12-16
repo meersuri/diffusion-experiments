@@ -8,13 +8,15 @@ import numpy as np
 
 from diffusion.algorithm import LinearScheduler
 
-def train_diffusion(model, dataset, epochs=1, max_time=1000, valid_data=None):
+def train_diffusion(model, dataset, epochs=1, max_time=1000, valid_data=None, resume=False):
     wts_path = type(dataset).__name__ + '_weights.pth'
     loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
     valid_loader = None
     if valid_data is not None:
         valid_loader = torch.utils.data.DataLoader(valid_data, batch_size=32, shuffle=True)
         valid_batches = 5
+    if resume:
+        load(model, wts_path)
     model.to('cuda')
     model.train(True)
     optim = torch.optim.Adagrad(model.parameters(), lr=0.01)
