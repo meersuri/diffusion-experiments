@@ -110,8 +110,8 @@ class UNet(torch.nn.Module):
         super().__init__()
         self.in_conv = torch.nn.Conv2d(3, start_channels, 3, padding='same')
         self.time_embed = TimeEncoding(max_time, time_dim)
-        self.enc = Encoder(start_channels, factor=factor)
-        self.dec = Decoder(self.enc.filter_sizes[::-1])
+        self.enc = Encoder(start_channels, factor=factor, time_dim=time_dim)
+        self.dec = Decoder(self.enc.filter_sizes[::-1], time_dim=time_dim)
         self.out_conv = torch.nn.Conv2d(start_channels, 3, 3, padding='same')
 
     def forward(self, x, t):

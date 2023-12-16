@@ -76,15 +76,17 @@ def test_autoencoder(model, dataset):
             img.save(f'out_{i}.png')
         break
 
-def test_diffusion(model, dataset, shape, time=0):
+def test_diffusion(model, dataset, shape, steps=None):
     wts_path = type(dataset).__name__ + '_weights.pth'
     load(model, wts_path)
     model.eval()
     model.to('cuda')
     scheduler = LinearScheduler()
+    if steps is None:
+        steps = scheduler.steps
     data = torch.randn(shape).to('cuda')
     with torch.no_grad():
-        for t in tqdm.tqdm(reversed(range(scheduler.steps))):
+        for t in tqdm.tqdm(reversed(range(steps))):
             if t == 0:
                 z = torch.zeros(shape).to('cuda')
             else:
