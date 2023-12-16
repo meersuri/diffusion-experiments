@@ -132,7 +132,7 @@ def export_model(model, dataset, time=0):
 
 if __name__ == '__main__':
     img_size = (64, 64)
-    model = UNet(start_channels=32, factor=8)
+    model = UNet(start_channels=16, factor=16, time_dim=32)
     preprocess = transform_Flowers102(img_size=img_size)
     data = Flowers102(train=True, transform=preprocess)
     valid_data = Flowers102(train=False, transform=preprocess)
@@ -140,6 +140,6 @@ if __name__ == '__main__':
 #    test_autoencoder(model, data, 999)
     train_diffusion(model, data, epochs=10, valid_data=valid_data)
     test_diffusion(model, data, (8, 3, img_size[0], img_size[0]))
-#    export_model(model, data)
+    export_model(model, data)
 
 
