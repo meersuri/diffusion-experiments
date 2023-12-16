@@ -8,9 +8,12 @@ import numpy as np
 
 from diffusion.algorithm import LinearScheduler
 
-def train_diffusion(model, dataset, epochs=1, max_time=1000):
+def train_diffusion(model, dataset, epochs=1, max_time=1000, valid_data=None):
     wts_path = type(dataset).__name__ + '_weights.pth'
     loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+    valid_loader = None
+    if valid_data is not None:
+        valid_loader = torch.utils.data.DataLoader(valid_data, batch_size=32, shuffle=True)
     model.to('cuda')
     model.train(True)
     optim = torch.optim.Adagrad(model.parameters(), lr=0.01)
@@ -31,7 +34,21 @@ def train_diffusion(model, dataset, epochs=1, max_time=1000):
                 best_loss = loss.item()
                 torch.save(model.state_dict(), wts_path)
             if step % 10 == 0:
-                print(f"\033sLoss: {loss.item()}\033u")
+                print(f"\033s Train Loss: {loss.item()}\033u", end='')
+                if valid_loader is not None:
+                    with torch.no_grad():
+                        valid_loss = 0.0
+                        data_iter = iter(valid_loader)
+                        batches = 5
+                        for s in range(batches):
+                            data, label = next(data_iter)
+                            time = torch.randint(0, max_time, (1,)).to('cuda')
+                            noisy_sample, noise = schedule.sample(x0, time)
+                            noise_pred = model(noisy_sample, time)
+                            valid_loss += criterion(noise_pred, noise).item()
+                        valid_loss /= batches
+                        print(f"\033s Val Loss: {valid_loss}\033u")
+
 
 def train_autoencoder(model, dataset, epochs=1):
     wts_path = type(dataset).__name__ + '_weights.pth'
@@ -115,9 +132,10 @@ if __name__ == '__main__':
     model = UNet(start_channels=32, factor=8)
     preprocess = transform_Flowers102(img_size=img_size)
     data = Flowers102(train=True, transform=preprocess)
-    train_diffusion(model, data, epochs=15)
-#    train_autoencoder(model, data, epochs=15)
-#    test_autoencoder(model, data, 500)
+    valid_data = Flowers102(train=False, transform=preprocess)
+#    train_autoencoder(model, data, epochs=10)
+#    test_autoencoder(model, data, 999)
+    train_diffusion(model, data, epochs=10, valid_data=valid_data)
     test_diffusion(model, data, (8, 3, img_size[0], img_size[0]))
 #    export_model(model, data)
 
