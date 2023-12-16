@@ -19,9 +19,9 @@ class CIFAR10(torchvision.datasets.CIFAR10):
                          download=True,
                          target_transform=target_transform)
 
-def transform_Flowers102():
+def transform_Flowers102(img_size=(96, 128)):
     return torchvision.transforms.Compose([
-        torchvision.transforms.Resize((96, 128)),
+        torchvision.transforms.Resize(img_size),
         torchvision.transforms.ToTensor(),
         ])
 
