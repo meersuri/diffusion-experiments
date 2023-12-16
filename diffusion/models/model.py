@@ -99,11 +99,18 @@ class TimeEncoding(torch.nn.Module):
         super().__init__()
         self.dim = dim
         self.max_time = max_time
-        pos = torch.arange(dim).unsqueeze(1)
-        self.register_buffer('pos', pos)
+        embedding = torch.zeros(max_time, self.dim)
+        for time in range(self.max_time):
+            for i in range(self.dim):
+                arg = torch.Tensor([time/(10000**(2*i/self.dim))])
+                if i % 2 == 0:
+                    embedding[time][i] = torch.sin(arg)
+                else:
+                    embedding[time][i] = torch.cos(arg)
+        self.register_buffer('embedding', embedding)
 
     def forward(self, t):
-        return torch.sin(self.pos*1000**(t/self.max_time)).reshape(1, self.dim)
+        return self.embedding[t]
 
 class UNet(torch.nn.Module):
     def __init__(self, start_channels=8, factor=8, time_dim=32, max_time=1000):
