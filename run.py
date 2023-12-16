@@ -14,6 +14,7 @@ def train_diffusion(model, dataset, epochs=1, max_time=1000, valid_data=None):
     valid_loader = None
     if valid_data is not None:
         valid_loader = torch.utils.data.DataLoader(valid_data, batch_size=32, shuffle=True)
+        valid_batches = 5
     model.to('cuda')
     model.train(True)
     optim = torch.optim.Adagrad(model.parameters(), lr=0.01)
@@ -30,24 +31,26 @@ def train_diffusion(model, dataset, epochs=1, max_time=1000, valid_data=None):
             loss = criterion(noise_pred, noise)
             loss.backward()
             optim.step()
-            if loss.item() < best_loss:
+            if valid_data is None and loss.item() < best_loss:
                 best_loss = loss.item()
                 torch.save(model.state_dict(), wts_path)
-            if step % 10 == 0:
-                print(f"\033s Train Loss: {loss.item()}\033u", end='')
-                if valid_loader is not None:
+            if step % 20 == 0:
+                print(f"\033s Train Loss: {loss.item():.4f}\033u", end='')
+                if valid_data is not None:
                     with torch.no_grad():
                         valid_loss = 0.0
                         data_iter = iter(valid_loader)
-                        batches = 5
-                        for s in range(batches):
+                        for s in range(valid_batches):
                             data, label = next(data_iter)
                             time = torch.randint(0, max_time, (1,)).to('cuda')
                             noisy_sample, noise = schedule.sample(x0, time)
                             noise_pred = model(noisy_sample, time)
                             valid_loss += criterion(noise_pred, noise).item()
-                        valid_loss /= batches
-                        print(f"\033s Val Loss: {valid_loss}\033u")
+                        valid_loss /= valid_batches
+                        print(f"\033s Val Loss: {valid_loss:.4f}\033u")
+                        if valid_loss < best_loss:
+                            best_loss = loss.item()
+                            torch.save(model.state_dict(), wts_path)
 
 
 def train_autoencoder(model, dataset, epochs=1):
