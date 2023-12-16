@@ -59,14 +59,14 @@ def load(model, weights_path):
     model.load_state_dict(torch.load(weights_path))
     return model
 
-def test_autoencoder(model, dataset):
+def test_autoencoder(model, dataset, time):
     wts_path = type(dataset).__name__ + '_weights.pth'
     load(model, wts_path)
     model.eval()
     model.to('cpu')
     test_loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
     for data, label in test_loader:
-        out = model(data, 0)
+        out = model(data, time)
         for i in range(out.shape[0]):
             img = out[i, ...]
             img = np.moveaxis(img.detach().numpy(), 0, -1)
