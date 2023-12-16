@@ -106,10 +106,10 @@ class TimeEncoding(torch.nn.Module):
         return torch.sin(self.pos*1000**(t/self.max_time)).reshape(1, self.dim)
 
 class UNet(torch.nn.Module):
-    def __init__(self, start_channels=8, factor=8, time_dim=32):
+    def __init__(self, start_channels=8, factor=8, time_dim=32, max_time=1000):
         super().__init__()
         self.in_conv = torch.nn.Conv2d(3, start_channels, 3, padding='same')
-        self.time_embed = TimeEncoding(100, time_dim)
+        self.time_embed = TimeEncoding(max_time, time_dim)
         self.enc = Encoder(start_channels, factor=factor)
         self.dec = Decoder(self.enc.filter_sizes[::-1])
         self.out_conv = torch.nn.Conv2d(start_channels, 3, 3, padding='same')
