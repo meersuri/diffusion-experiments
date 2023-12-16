@@ -27,19 +27,17 @@ class Block(torch.nn.Module):
     def __init__(self, channels, time_dim=32):
         super().__init__()
         self.in_norm = torch.nn.InstanceNorm2d(channels)
-        self.in_conv = torch.nn.Conv2d(channels, channels, 3, padding='same')
+        self.in_conv = torch.nn.Conv2d(channels, channels, 1, padding='same')
         self.in_act = torch.nn.GELU()
         self.time_proj = torch.nn.Linear(time_dim, channels, bias=False)
-        self.out_norm = torch.nn.InstanceNorm2d(2*channels)
-        self.out_conv = torch.nn.Conv2d(2*channels, channels, 3, padding='same')
+        self.out_norm = torch.nn.InstanceNorm2d(channels)
+        self.out_conv = torch.nn.Conv2d(channels, channels, 1, padding='same')
         self.out_act = torch.nn.GELU()
 
     def forward(self, x, t):
         time = self.time_proj(t).unsqueeze(-1).unsqueeze(-1)
-        out = self.in_act(self.in_conv(self.in_norm(x)))
-        time = torch.broadcast_to(time, out.shape)
-        out = torch.cat([out, time], axis=1)
-        return x + self.out_act(self.out_conv(self.out_norm(out)))
+        x = self.in_act(self.in_conv(self.in_norm(x))) + time
+        return x + self.out_act(self.out_conv(self.out_norm(x)))
 
 class Layer(torch.nn.Module):
     def __init__(self, conv_block, block):
